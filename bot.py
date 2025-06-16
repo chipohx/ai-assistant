@@ -5,10 +5,12 @@ import requests
 from dotenv import load_dotenv
 import os
 
+
+load_dotenv()
+
 TELEGRAMBOT_KEY = os.getenv("TELEGRAMBOT_KEY")
 URL = os.getenv("URL")
 
-load_dotenv()
 bot = telebot.TeleBot(TELEGRAMBOT_KEY)
 
 csrftoken = requests.get(URL).json()['csrf']
