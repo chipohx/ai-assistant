@@ -5,20 +5,22 @@ import requests
 from dotenv import load_dotenv
 import os
 
-TELEGRAMBOT_KEY = os.getenv("TELEGRAMBOT_KEY")
-URL = os.getenv("URL")
+TELEGRAMBOT_KEY='7149122758:AAFPExYYBW1YLICqo76wx9O-UNOXJ7_wtNU'
+URL='https://feebly-settled-killifish.cloudpub.ru/'
 
 load_dotenv()
 bot = telebot.TeleBot(TELEGRAMBOT_KEY)
 
-csrftoken = requests.get(URL).json()['csrf']
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 state = "idle"
 # Список состояний:
 # - 
-
+csrftoken = requests.get(URL).json()['csrf']
+header = {'X-CSRFToken': csrftoken}
+cookies = {'csrftoken': csrftoken}
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -27,6 +29,11 @@ def start(message):
     btn1 = types.KeyboardButton("👋 Привет! Я бот для создания напоминаний! ")
     markup.add(btn1)
     bot.send_message(message.from_user.id, "👋 Привет! Я твой бот-помошник!", reply_markup=markup)
+
+@bot.message_handler(commands=['all'])
+def get_all_records(message):
+    mes = requests.get(URL+"/records/all", params={"user_id": message.from_user.id}).json()
+    bot.send_message(message.from_user.id, str(mes['recs']))
 
 
 @bot.message_handler(content_types=['text'])
@@ -41,11 +48,9 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, '❓ Задайте интересующий вас вопрос', reply_markup=markup) #ответ бота
 
     else:
-        
-        
+               
         content = {"message": message.text, "user_id": message.from_user.id}
-        header = {'X-CSRFToken': csrftoken}
-        cookies = {'csrftoken': csrftoken}
+        
 
         mes = requests.post(URL, data=content, headers=header, cookies=cookies).json()
         bot.send_message(message.from_user.id, mes['message'])

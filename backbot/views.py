@@ -18,7 +18,8 @@ def post_db(url, content):
 
     ans = requests.post(url, data=content, headers=header, cookies=cookies).json()
     return ans
-    
+def get_db(url, content):
+    return requests.get(url, params=content)
     
 def index(request):
     content = {'message' : 'hello', 'csrf': get_token(request)}
@@ -26,16 +27,19 @@ def index(request):
         
         ans = preprosess_message(request.POST['message'])
         ans['user_id'] = request.POST['user_id']
+        print(ans)
         if ans['action'] == 'add':
             resp = post_db(URL + '/records/add', ans)
+        elif ans['action'] == 'delete':
+            resp = get_db(URL + '/records/get_similar', ans).json()
+            print(resp)
         return JsonResponse(resp)
     
     return JsonResponse(content)
 
 def preprosess_message(text):
     try:
-        reminder = "Создай заметку на послезавтра на 6 часов вечера забрать дочку из садика"
-        parsed_data = parse_reminder_huggingface(reminder)
+        parsed_data = parse_reminder_huggingface(text)
 
         return parsed_data
         # # Выводим все поля из JSON
@@ -64,7 +68,7 @@ def preprosess_message(text):
 
 def parse_reminder_huggingface(text):
     current_datetime = datetime.now()
-    print(current_datetime)
+    
 
     headers = {"Authorization": f"Bearer {'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'}"}
 
