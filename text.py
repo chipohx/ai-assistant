@@ -1,9 +1,7 @@
-import os
 import requests
 import json
 import re
 from datetime import datetime
-
 
 def parse_reminder_huggingface(text):
     current_datetime = datetime.now()
@@ -22,8 +20,8 @@ def parse_reminder_huggingface(text):
                 "content": text
             }
         ],
-        # "model": "deepseek/deepseek-v3-0324",
-        "model": "meta-llama/Llama-3-8B-Instruct",
+        "model": "deepseek/deepseek-v3-0324",
+        # "model": "meta-llama/Llama-3-8B-Instruct",
     }
 
     response = requests.post(
@@ -47,33 +45,3 @@ def parse_reminder_huggingface(text):
             raise ValueError(f"Ошибка парсинга JSON. Ответ модели: {result}") from e
     else:
         raise Exception(f"Ошибка API. Код: {response.status_code}. Текст: {response.text}")
-
-# Пример использования
-try:
-    reminder = "Создай заметку на послезавтра на 6 часов вечера забрать дочку из садика"
-    parsed_data = parse_reminder_huggingface(reminder)
-
-    print(parsed_data)
-    # # Выводим все поля из JSON
-    # print("Распарсенные данные:")
-    # print(f"Действие: {parsed_data.get('action', 'не указано')}")
-    # print(f"Текст: {parsed_data.get('text', 'не указан')}")
-    # print(f"Категория: {parsed_data.get('category', 'не указана')}")
-    # print(f"Локация: {parsed_data.get('location', 'не указана')}")
-    #
-    # if 'datetime' in parsed_data:
-    #     try:
-    #         reminder_time = datetime.strptime(parsed_data['datetime'], "%Y-%m-%d %H:%M")
-    #         print(f"Дата и время: {reminder_time}")
-    #     except ValueError:
-    #         print(f"Неверный формат даты: {parsed_data['datetime']}")
-    # else:
-    #     print("Дата и время: не указаны")
-    #
-    # print(f"Статус выполнения: {parsed_data['done']}")
-    # print(f"Условие напоминания: {parsed_data.get('condition', 'None')}")
-
-except KeyError as e:
-    print(f"В ответе отсутствует ожидаемый ключ: {e}. Полный ответ: {parsed_data}")
-except Exception as e:
-    print(f"Произошла ошибка: {str(e)}")
