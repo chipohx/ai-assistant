@@ -34,3 +34,5 @@ def add(request):
     content = {'message' : 'hello', 'csrf': get_token(request)}
     return JsonResponse(content)
 
+
+

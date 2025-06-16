@@ -2,15 +2,32 @@ import telebot
 from telebot import types
 import requests
 
-bot = telebot.TeleBot('7149122758:AAFPExYYBW1YLICqo76wx9O-UNOXJ7_wtNU')
+from dotenv import load_dotenv
+import os
+
+TELEGRAMBOT_KEY = os.getenv("TELEGRAMBOT_KEY")
+URL = os.getenv("URL")
+
+load_dotenv()
+bot = telebot.TeleBot(TELEGRAMBOT_KEY)
+
+csrftoken = requests.get(URL).json()['csrf']
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+state = "idle"
+# Список состояний:
+# - 
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn1 = types.KeyboardButton("👋 Поздороваться")
+    btn1 = types.KeyboardButton("👋 Привет! Я бот для создания напоминаний! ")
     markup.add(btn1)
     bot.send_message(message.from_user.id, "👋 Привет! Я твой бот-помошник!", reply_markup=markup)
+
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
@@ -24,9 +41,7 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, '❓ Задайте интересующий вас вопрос', reply_markup=markup) #ответ бота
 
     else:
-        URL = 'http://localhost:8000'
-
-        csrftoken = requests.get(URL).json()['csrf']
+        
         
         content = {"message": message.text, "user_id": message.from_user.id}
         header = {'X-CSRFToken': csrftoken}
@@ -34,5 +49,9 @@ def get_text_messages(message):
 
         mes = requests.post(URL, data=content, headers=header, cookies=cookies).json()
         bot.send_message(message.from_user.id, mes['message'])
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
 bot.polling(none_stop=True, interval=0) #обязательная для работы бота часть

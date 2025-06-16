@@ -20,15 +20,14 @@ def post_db(url, content):
     return ans
     
     
-
 def index(request):
     content = {'message' : 'hello', 'csrf': get_token(request)}
     if request.method == 'POST':
         
         ans = preprosess_message(request.POST['message'])
         ans['user_id'] = request.POST['user_id']
-        
-        resp = post_db(URL + '/records/add', ans)
+        if ans['action'] == 'add':
+            resp = post_db(URL + '/records/add', ans)
         return JsonResponse(resp)
     
     return JsonResponse(content)
