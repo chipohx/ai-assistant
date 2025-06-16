@@ -16,7 +16,7 @@ class StateMachine:
     def __init__(self):
         self.states = {}
         self.transitions = {}
-        self.current_state = None
+        self.user_states = {}  # user_id -> current State object
 
     def add_state(self, state):
         self.states[state.name] = state
@@ -24,26 +24,34 @@ class StateMachine:
     def add_transition(self, from_state, to_state, trigger):
         self.transitions.setdefault(from_state, {})[trigger] = to_state
 
-    def set_initial_state(self, state_name):
-        self.current_state = self.states[state_name]
-        self.current_state.on_enter()
+    def set_initial_state(self, user_id, state_name):
+        state = self.states[state_name]
+        self.user_states[user_id] = state
+        state.on_enter()
 
-    def trigger(self, event):
-        if self.current_state.name in self.transitions:
-            if event in self.transitions[self.current_state.name]:
-                new_state_name = self.transitions[self.current_state.name][event]
-                self.current_state.on_exit()
-                self.current_state = self.states[new_state_name]
-                self.current_state.on_enter()
+    def trigger(self, user_id, event):
+        if user_id not in self.user_states:
+            print(f"Пользователь {user_id} не имеет текущего состояния.")
+            return
+
+        current_state = self.user_states[user_id]
+        current_state_name = current_state.name
+
+        if current_state_name in self.transitions:
+            if event in self.transitions[current_state_name]:
+                new_state_name = self.transitions[current_state_name][event]
+                current_state.on_exit()
+                new_state = self.states[new_state_name]
+                self.user_states[user_id] = new_state
+                new_state.on_enter()
             else:
-                print(f"Нет перехода по событию '{event}' из состояния '{self.current_state.name}'")
+                print(f"Нет перехода по событию '{event}' из состояния '{current_state_name}'")
         else:
-            print(f"Нет переходов из состояния '{self.current_state.name}'")
+            print(f"Нет переходов из состояния '{current_state_name}'")
 
-    def get_state(self):
-        if self.current_state:
-            return self.current_state.name
-        return None
+    def get_state(self, user_id):
+        state = self.user_states.get(user_id)
+        return state.name if state else None
 
 
 if __name__ == "__main__":
