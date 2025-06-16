@@ -13,10 +13,11 @@ import state_handlers.choose_event
 import state_handlers.view_event_data
 import state_handlers.edit_data
 import state_handlers.setup_end
+import state_handlers.idle
 
 # Запуск работы бота - - - - - - - - - - - - - - - - - - - - - -  - - -
 
+logger.info("Bot started successfully!")
+
 bot = storage.get_value('bot')
 bot.polling(none_stop=True, interval=0)
-
-logger.info("Bot started successfully!")
