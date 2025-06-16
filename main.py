@@ -1,3 +1,5 @@
+from loguru import logger
+logger.info("Starting bot...")
 
 # Первичная настройка - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -16,3 +18,5 @@ import state_handlers.setup_end
 
 bot = storage.get_value('bot')
 bot.polling(none_stop=True, interval=0)
+
+logger.info("Bot started successfully!")

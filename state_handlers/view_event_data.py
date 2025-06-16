@@ -1,3 +1,9 @@
+from loguru import logger
+logger.info("Adding view event data state handler...")
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
 from telebot import types
 import storage
 

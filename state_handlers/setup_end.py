@@ -1,3 +1,9 @@
+from loguru import logger
+logger.info("Adding setup end state handler...")
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
 from telebot import types
 import storage
 

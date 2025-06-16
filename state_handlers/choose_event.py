@@ -1,3 +1,9 @@
+from loguru import logger
+logger.info("Adding choose event handler...")
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
 from telebot import types
 import storage
 
