@@ -1,3 +1,9 @@
+from loguru import logger
+logger.info("Initializing state machine...")
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
 import storage
 
 
@@ -6,10 +12,10 @@ class State:
         self.name = name
 
     def on_enter(self):
-        print(f"Вход в состояние: {self.name}")
+        logger.debug(f"Enter state: {self.name}")
 
     def on_exit(self):
-        print(f"Выход из состояния: {self.name}")
+        logger.debug(f"Exit state: {self.name}")
 
 
 class StateMachine:
@@ -31,7 +37,7 @@ class StateMachine:
 
     def trigger(self, user_id, event):
         if user_id not in self.user_states:
-            print(f"Пользователь {user_id} не имеет текущего состояния.")
+            print(f"User {user_id} does not have current state.")
             return
 
         current_state = self.user_states[user_id]
@@ -45,9 +51,9 @@ class StateMachine:
                 self.user_states[user_id] = new_state
                 new_state.on_enter()
             else:
-                print(f"Нет перехода по событию '{event}' из состояния '{current_state_name}'")
+                print(f"No transition by trigger '{event}' from state '{current_state_name}'")
         else:
-            print(f"Нет переходов из состояния '{current_state_name}'")
+            print(f"No transitions from state '{current_state_name}'")
 
     def get_state(self, user_id):
         state = self.user_states.get(user_id)
@@ -55,7 +61,7 @@ class StateMachine:
 
 
 if __name__ == "__main__":
-    print("This script is intended to be imported as a module, not run directly.")
+    logger.error("This script is intended to be imported as a module, not run directly.")
     exit(1)
 
 
@@ -90,9 +96,6 @@ sm.add_transition("Edit data", "View event data", "input data")
 sm.add_state(choose_event)
 sm.add_transition("Choose event", "Idle", "cancel")
 sm.add_transition("Choose event", "Idle", "event have chosen")
-
-
-sm.set_initial_state("Greetings")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
