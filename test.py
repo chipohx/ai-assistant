@@ -1,49 +1,39 @@
+import os
 import requests
-from datetime import datetime
 import json
 import re
-
-# Ваш IAM-токен из Yandex Cloud
-IAM_TOKEN = 't1.9euelZqblYmdl5OOjY6aypeTipnNye3rnpWaz5KVmYucz5vIip2Jns6Sj8bl9PdSE0E9-e9LPyvm3fT3TgxBPfnvSz8r5tXl9e-GnNGQnoqLl9GckJGMkJOa7fmQj5qRlpvN5_XrnpWakpfKk8qTjpXHzpCLlseXkY3v_M3X9dvPxpmam82ez9KZnsia0svGzZ7Sx57JxtKcnp6ZzpzHmsiZzMjv_sXrnpWakpfKk8qTjpXHzpCLlseXkY29656VmomampbKnZfPjpyXzJSczI6bteuelZrPkpWZi5zPm8iKnYmezpKPxg.CQH3YzDldh9FE_TvMAKrmJYY8yJvH_2w0sfKz8EpkWA2N1ANB5e6GVaCLdMK4A_hQXI7RITIikKo0IQtp9lSAg  '
-FOLDER_ID = "b1gmdnrpom6eg5vk6o9g"
+from datetime import datetime
 
 
-def parse_reminder_yandexgpt(text):
+def parse_reminder_huggingface(text):
     current_datetime = datetime.now()
     print(current_datetime)
-    headers = {
-        "Authorization": f"Bearer {IAM_TOKEN}",
-        "Content-Type": "application/json"
-    }
 
-    data = {
-        "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
-        "completionOptions": {
-            "stream": False,
-            "temperature": 0.6,
-            "maxTokens": 2000
-        },
+    headers = {"Authorization": f"Bearer {'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'}"}
+
+    payload = {
         "messages": [
             {
                 "role": "system",
-                "text": "Ты парсер напоминаний. Извлекай дату, время и текст. Отвечай строго в JSON-формате, например: {\n\n'action': 'add',\n\n'text': 'забрать дочку из садика', \n\n'category': 'meeting',\n\n'location': '[37.617494, 55.752121]',\n\n'datetime': '2023-11-20 09:40',\n\n'done': false,\n\n'condition': 'time'\n\n}. Не добавляй никаких пояснений, только JSON. Action может быть add, delete и update. Condition может быть time (напоминание по времени), place (напоминание по месту) и timeplace (напоминание по времени и месту). Категории: meeting, shopping, holiday, business." + f" Текущая дата: {current_datetime}"
+                "content": "Ты парсер напоминаний. Извлекай дату, время и текст. Отвечай строго в JSON-формате, например: {\n\n'action': 'add',\n\n'text': 'забрать дочку из садика', \n\n'category': 'meeting',\n\n'address': 'г. Томск Томский политехнический университет главный корпус',\n\n'datetime': '2023-11-20 09:40',\n\n'done': false,\n\n'condition': 'time'\n\n}. Не добавляй никаких пояснений, только JSON. Action может быть add, delete и update. Condition может быть time (напоминание по времени), place (напоминание по месту) и timeplace (напоминание по времени и месту). Категории: meeting, shopping, holiday, business." + f" Текущая дата: {current_datetime}"
             },
             {
                 "role": "user",
-                "text": text
+                "content": text
             }
-        ]
+        ],
+        # "model": "deepseek/deepseek-v3-0324",
+        "model": "meta-llama/Llama-3-8B-Instruct",
     }
 
     response = requests.post(
-        "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
+        "https://router.huggingface.co/novita/v3/openai/chat/completions",
         headers=headers,
-        json=data,
+        json=payload,
     )
 
     if response.status_code == 200:
-        result = response.json()["result"]["alternatives"][0]["message"]["text"]
-        # print("Ответ модели:", result)  # Для отладки
+        result = response.json()["choices"][0]["message"]["content"]
 
         # Пытаемся извлечь JSON из ответа
         try:
@@ -58,11 +48,10 @@ def parse_reminder_yandexgpt(text):
     else:
         raise Exception(f"Ошибка API. Код: {response.status_code}. Текст: {response.text}")
 
-
 # Пример использования
 try:
-    reminder = "Создай заметку на послезавтра на 6 часов вечера забрать дочку из садика горд Томск Главный корпус ТПУ"
-    parsed_data = parse_reminder_yandexgpt(reminder)
+    reminder = "Создай заметку на послезавтра на 6 часов вечера забрать дочку из садика"
+    parsed_data = parse_reminder_huggingface(reminder)
 
     print(parsed_data)
     # # Выводим все поля из JSON
