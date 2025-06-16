@@ -13,4 +13,4 @@ class Record(models.Model):
     location_y = models.FloatField()
     datetime = models.DateTimeField(default=timezone.now)
     done = models.BooleanField(default=False)
-    condition = models.CharField(max_length=16)
+    condition = models.CharField(max_length=16) 
