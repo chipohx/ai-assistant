@@ -18,6 +18,16 @@ csrftoken = storage.get_value('csrftoken')
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
 
+    user_id = message.from_user.id
+
+    if state_machine.get_state(user_id):
+        logger.info(f"User {user_id} already has a state, skipping greetings.")
+        text = "🚽"
+        bot.send_message(message.chat.id, text)
+        return
+    
+    state_machine.set_initial_state(user_id, 'Greetings')
+
     # Текст приветствия и условий
     welcome_text = (
         "👋 Приветствую вас в боте напоминаний!\n\n"

@@ -10,6 +10,7 @@ import telebot
 import requests
 
 import storage
+import state_machine
 
 
 if __name__ == "__main__":
