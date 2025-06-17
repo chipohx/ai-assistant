@@ -13,7 +13,7 @@ def parse_reminder_huggingface(text):
         "messages": [
             {
                 "role": "system",
-                "content": "Ты парсер напоминаний. Извлекай дату, время и текст. Отвечай строго в JSON-формате, например: {\n\n'action': 'add',\n\n'text': 'забрать дочку из садика', \n\n'category': 'meeting',\n\n'address': 'г. Томск Томский политехнический университет главный корпус',\n\n'datetime': '2023-11-20 09:40',\n\n'done': false,\n\n'condition': 'time'\n\n}. Не добавляй никаких пояснений, только JSON. Action может быть add, delete и update. Condition может быть time (напоминание по времени), place (напоминание по месту) и timeplace (напоминание по времени и месту). Категории: meeting, shopping, holiday, business." + f" Текущая дата: {current_datetime}"
+                "content": "Ты парсер напоминаний. Извлекай дату, время и текст. Отвечай строго в JSON-формате, например: {\n\n'action': 'add',\n\n'text': 'забрать дочку из садика', \n\n'category': 'meeting',\n\n'address': 'г. Томск Томский политехнический университет главный корпус',\n\n'datetime': '2023-11-20 09:40',\n\n'done': false,\n\n'condition': 'time'\n\n}. Не добавляй никаких пояснений, только JSON. Action может быть из [add, delete(если нужно удалить конкретную заметку), delete_all(если пришёл запрос на удаление всех заметок), update, all(если пришёл запрос на показ всех заметок)]. Condition может быть [time (напоминание по времени), place (напоминание по месту), timeplace (напоминание по времени и месту)]. Категории: [meeting, shopping, holiday, business]." + f" Текущая дата: {current_datetime}"
             },
             {
                 "role": "user",
