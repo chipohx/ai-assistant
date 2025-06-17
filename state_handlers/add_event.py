@@ -27,7 +27,11 @@ def show_event(chat_id):
         return
 
     reminder = sessions[chat_id]['added_reminder']
-    text = f"📅 **Напоминание**\n\nДата и время: {reminder['datetime']}\nТип: **{reminder['category']}**\nТекст: **{reminder['text'].capitalize()}**\n\n"
+
+    text = f"📅 Напоминание\n\n"
+    text += reminder['text'].capitalize() + "\n\n"
+    text += f"Дата и время: {reminder['datetime'][:16]}\n" if reminder["condition"] == "time" else f"Место: {reminder['address']}\n"
+    text += f"Категория: {reminder['category'].capitalize()}"
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     button = types.KeyboardButton("✅ Сохранить напоминание")

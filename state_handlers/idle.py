@@ -5,6 +5,7 @@ logger.info("Adding idle state handler...")
 
 
 from telebot import types
+from telebot.types import ReplyKeyboardRemove
 import storage
 
 bot = storage.get_value('bot')
@@ -32,8 +33,6 @@ URL = os.getenv("URL")
 @bot.message_handler(content_types=['text', 'voice'])
 def idle(message):
 
-    if state_machine.get_state(message.from_user.id) != 'Idle':
-        state_machine.trigger(message.from_user.id, "continue")
 
     sessions = storage.get_value('sessions')
     if not sessions or not message.chat.id in sessions:
@@ -42,15 +41,27 @@ def idle(message):
 
     command = None
 
-    if message.text == "Да! Давайте начнем! 🚀" or message.text == "Назад":
-        bot.send_message(message.chat.id, "🕒 Отлично! Напишите его текст или отправьте аудио с напоминанием. \n\nЕсли захотите удалить напоминание, то скажите \"Удалить напоминание на завтра...\"\n\n Если захотите получить список напоминаний, то скажите \"Покажи все напоминания\"")
+
+    if state_machine.get_state(message.chat.id) == "Greetings":
+
+        if not "location" in sessions[message.chat.id]:
+            bot.send_message(message.chat.id, "Пожалуйста, отправьте свою живую локацию")
+            return
+        else:
+            state_machine.trigger(message.from_user.id, "continue")
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+
+
+    if message.text == "Давайте начнем! 🚀" or message.text == "Назад":
+        bot.send_message(message.chat.id, "🕒 Отлично! Напишите его текст или отправьте аудио с напоминанием. \n\nЕсли захотите удалить напоминание, то скажите \"Удалить напоминание на завтра...\"\n\n Если захотите получить список напоминаний, то скажите \"Покажи все напоминания\"", reply_markup=ReplyKeyboardRemove())
         return
     elif message.text == "❌ Отменить напоминание":
-        bot.send_message(message.chat.id, "❌ Напоминание отменено")
+        bot.send_message(message.chat.id, "❌ Напоминание отменено", reply_markup=ReplyKeyboardRemove())
         return
     elif message.text == "✅ Сохранить напоминание":
 
-        bot.send_message(message.chat.id, "💾 Сохраняю напоминание...")
+        bot.send_message(message.chat.id, "💾 Сохраняю напоминание...", reply_markup=ReplyKeyboardRemove())
         
         content = sessions[message.chat.id]['added_reminder']
         content['user_id'] = message.chat.id
@@ -70,7 +81,7 @@ def idle(message):
         command = parse_reminder_huggingface(message.text)
         logger.info(f"User {message.from_user.id} added text command: {command}")
     elif message.content_type == 'voice':
-        message_id = bot.send_message(message.chat.id, "Обработка голоса...")
+        bot.send_message(message.chat.id, "Обработка голоса...")
         voice = message.voice
         file_info = bot.get_file(voice.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -120,7 +131,7 @@ def idle(message):
         return
     
 
-    if "all" in command["action"]:
+    if command["action"] == "show":
         
         content = {"user_id": message.chat.id}
         
@@ -140,4 +151,8 @@ def idle(message):
 
         return
 
-    bot.send_message(message.chat.id, "Команда не распознана (")
+    if command["action"] == "delete_all":
+        bot.send_message(message.chat.id, "Функционал удаления всех сообщений был упущен 🚽")
+        return
+
+    bot.send_message(message.chat.id, "Команда не распознана 🧻")

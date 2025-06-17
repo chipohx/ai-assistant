@@ -75,7 +75,11 @@ def handle_select_event(call):
     markup.add(types.InlineKeyboardButton(text="Удалить напоминание", callback_data=f"delete:{event_index}"))
 
 
-    text = f"{events[event_index]['text'].capitalize()}\nВремя: {events[event_index]['datetime'][:16].replace('T',' ')}\nКатегория: {events[event_index]['category']}"
-    bot.send_message(call.message.chat.id, f"📅 Напоминание\n\n{text}", reply_markup=markup)
+    text = f"📅 Напоминание\n\n"
+    text += events[event_index]['text'].capitalize() + "\n\n"
+    text += f"Дата и время: {events[event_index]['datetime'][:16].replace('T', ' ')}\n" if events[event_index]["condition"] == "time" else f"Место: {events[event_index]['address']}\n"
+    text += f"Категория: {events[event_index]['category'].capitalize()}"
+
+    bot.send_message(call.message.chat.id, text, reply_markup=markup)
 
     bot.answer_callback_query(call.id)

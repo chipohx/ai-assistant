@@ -12,6 +12,7 @@ import state_handlers.greetings
 import state_handlers.setup_end
 import state_handlers.view_events
 import state_handlers.view_event
+import state_handlers.live_location
 import state_handlers.idle
 import state_handlers.reserve_handler # Он обязательно должен быть в конце, чтобы не мешать другим обработчикам
 

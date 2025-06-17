@@ -37,9 +37,15 @@ def _send_page(chat_id, event_list, session_id, page, message_id=None):
     if not events:
         text = "❌ Напоминания не найдены."
     else:
-        lines = [f"🔹 {i+1}. {e['text'].capitalize()}\nВремя: {e['datetime'][:16].replace('T',' ')}\nТип: {e['category']}\n"
-                 for i, e in enumerate(events, start=start)]
-        text = f"📄 Страница {page + 1} из {total_pages}\n\n" + "\n".join(lines)
+
+        text = f"📄 Страница {page + 1} из {total_pages}\n\n"
+
+        for i, e in enumerate(events, start=start):
+
+            text += f"🔹 {i+1}. "
+            text += f"{e['text'].capitalize()}\n"
+            text += f"Время: {e['datetime'][:16].replace('T',' ')}\n" if e["condition"] == "time" else f"Место: {e['address']}\n"
+            text += f"Тип: {e['category']}\n\n"
 
     # Кнопки: выбрать и листать
     markup = types.InlineKeyboardMarkup(row_width=2)
