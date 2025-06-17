@@ -27,6 +27,15 @@ def send_welcome(message):
     
     state_machine.set_initial_state(user_id, 'Greetings')
 
+    sessions = storage.get_value('sessions')
+    if not sessions:
+        logger.info("Creating new sessions storage")
+        sessions = {}
+    if not message.chat.id in sessions:
+        logger.info(f"Creating new session for chat ID {message.chat.id}")
+        sessions[message.chat.id] = {'event_list': [], 'current_page': 0, 'current_event': None}
+        storage.set_storage('sessions', sessions)
+
     # Текст приветствия и условий
     welcome_text = (
         "👋 Приветствую вас в боте напоминаний!\n\n"
