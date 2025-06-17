@@ -11,10 +11,15 @@ bot = storage.get_value('bot')
 state_machine = storage.get_value('state_machine')
 csrftoken = storage.get_value('csrftoken')
 
+header = {'X-CSRFToken': csrftoken}
+cookies = {'csrftoken': csrftoken}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 import state_handlers.add_event as add_event
+import state_handlers.view_events as view_events
+import state_handlers.show_all_events as show_all_events
+
 from text import parse_reminder_huggingface
 from voice import parse_reminder_from_audio
 
@@ -37,18 +42,19 @@ def idle(message):
 
     command = None
 
-    if message.text == "Да! Давайте начнем! 🚀":
-        bot.send_message(message.chat.id, "🕒 Отлично! Напишите его текст или отправьте аудио с напоминанием.")
+    if message.text == "Да! Давайте начнем! 🚀" or message.text == "Назад":
+        bot.send_message(message.chat.id, "🕒 Отлично! Напишите его текст или отправьте аудио с напоминанием. \n\nЕсли захотите удалить напоминание, то скажите \"Удалить напоминание на завтра...\"\n\n Если захотите получить список напоминаний, то скажите \"Покажи все напоминания\"")
         return
     elif message.text == "❌ Отменить напоминание":
         bot.send_message(message.chat.id, "❌ Напоминание отменено")
         return
     elif message.text == "✅ Сохранить напоминание":
+
+        bot.send_message(message.chat.id, "💾 Сохраняю напоминание...")
+        
         content = sessions[message.chat.id]['added_reminder']
         content['user_id'] = message.chat.id
-        header = {'X-CSRFToken': csrftoken}
-        cookies = {'csrftoken': csrftoken}
-
+        
         responce = requests.post(URL + "records/add", data=content, headers=header, cookies=cookies)
 
         if responce.status_code != 200:
@@ -56,6 +62,7 @@ def idle(message):
             logger.error(f"Error adding reminder: {mes['message']}")
             bot.send_message(message.chat.id, "❌ Не удалось сохранить напоминание. Попробуйте еще раз.")
             return
+        
         bot.send_message(message.chat.id, "✅ Напоминание успешно сохранено!")
         return
     
@@ -63,7 +70,7 @@ def idle(message):
         command = parse_reminder_huggingface(message.text)
         logger.info(f"User {message.from_user.id} added text command: {command}")
     elif message.content_type == 'voice':
-
+        message_id = bot.send_message(message.chat.id, "Обработка голоса...")
         voice = message.voice
         file_info = bot.get_file(voice.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -86,9 +93,51 @@ def idle(message):
         sessions[message.chat.id]['added_reminder'] = command
         storage.set_storage('sessions', sessions)
         add_event.show_event(message.chat.id)
+        return
 
     if command["action"] == "delete":
-        pass
+        
 
-    if command["action"] == "view":
-        pass
+        message_id = bot.send_message(message.chat.id, "Получаю список напоминаний...")
+
+        content = {"text": command["text"]}
+        content['user_id'] = message.chat.id
+        
+        responce = requests.get(URL + "records/get_similar", params=content, headers=header, cookies=cookies)
+
+        if responce.status_code != 200:
+            mes = responce.json()
+            logger.error(f"Error adding reminder: {mes['message']}")
+            bot.send_message(message.chat.id, "❌ Не удалось получить напоминания. Попробуйте еще раз.")
+            return
+        
+        reminders = responce.json()
+        sessions[message.chat.id]['event_list'] = reminders['recs']
+        storage.set_storage('sessions', sessions)
+
+        view_events.show_events(message.chat.id)
+
+        return
+    
+
+    if "all" in command["action"]:
+        
+        content = {"user_id": message.chat.id}
+        
+        responce = requests.get(URL + "records/all", params=content, headers=header, cookies=cookies)
+
+        if responce.status_code != 200:
+            mes = responce.json()
+            logger.error(f"Error adding reminder: {mes['message']}")
+            bot.send_message(message.chat.id, "❌ Не удалось получить напоминания. Попробуйте еще раз.")
+            return
+        
+        reminders = responce.json()["recs"]
+        sessions[message.chat.id]["event_list"] = reminders
+        storage.set_storage('sessions', sessions)
+
+        show_all_events.show_all_events(message.chat.id)
+
+        return
+
+    bot.send_message(message.chat.id, "Команда не распознана (")

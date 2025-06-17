@@ -53,3 +53,4 @@ def send_welcome(message):
 
     # Отправка сообщения
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
+

@@ -50,11 +50,8 @@ def parse_reminder_from_audio(audio_file_path):
     if not os.path.exists(audio_file_path):
         raise FileNotFoundError(f"Аудио файл {audio_file_path} не найден")
     
-    
-
     transcription = ogg_to_text_google(audio_file_path)
 
-    print("sddsff")
     print(f"Распознанный текст: {transcription}")
 
     try:

@@ -7,10 +7,19 @@ logger.info("Adding view event data state handler...")
 from telebot import types
 import storage
 
-bot = storage.get_value('bot')
+state_machine = storage.get_value('state_machine')
+csrftoken = storage.get_value('csrftoken')
 
+bot = storage.get_value('bot')
+header = {'X-CSRFToken': csrftoken}
+cookies = {'csrftoken': csrftoken}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+import os
+import requests
+
+URL = os.getenv("URL")
 
 
 @bot.callback_query_handler(func=lambda call: ':' in call.data and call.data.startswith("delete:"))
@@ -26,17 +35,23 @@ def handle_select_event(call):
     event_index = int(call.data.split(":")[1])
     events = sessions[session_id]["event_list"]
 
-    if event_index < 0 or event_index >= len(events):
-        bot.answer_callback_query(call.id, "⛔ Неверный индекс события.")
-        return
+    content = {"rec_id": events[event_index]['id']}
     
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    markup.add(types.InlineKeyboardButton(text="Удалить напоминание", callback_data=f"delete:{event_index}"))
+    responce = requests.post(URL + "records/delete", data=content, headers=header, cookies=cookies)
 
-    bot.send_message(call.message.chat.id, f"Напоминание успешно удалено!", reply_markup=markup)
+    if responce.status_code != 200:
+        mes = responce.json()
+        logger.error(f"Error adding reminder: {mes['message']}")
+        bot.send_message(call.message.chat.id, "❌ Не удалось удалить напоминание. Попробуйте еще раз.")
+        return
+
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text=f"🗑 Напоминание удалено 📌",
+    )
 
     bot.answer_callback_query(call.id)
-
 
 
 @bot.callback_query_handler(func=lambda call: ':' in call.data and call.data.startswith("select:"))
@@ -60,7 +75,7 @@ def handle_select_event(call):
     markup.add(types.InlineKeyboardButton(text="Удалить напоминание", callback_data=f"delete:{event_index}"))
 
 
-    text = str(events[event_index])
-    bot.send_message(call.message.chat.id, f"Вы выбрали событие:\n\n{text}", reply_markup=markup)
+    text = f"{events[event_index]['text'].capitalize()}\nВремя: {events[event_index]['datetime'][:16].replace('T',' ')}\nКатегория: {events[event_index]['category']}"
+    bot.send_message(call.message.chat.id, f"📅 Напоминание\n\n{text}", reply_markup=markup)
 
     bot.answer_callback_query(call.id)
