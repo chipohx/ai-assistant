@@ -33,6 +33,8 @@ def handle_location(message: Message):
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             button = KeyboardButton(text="Давайте начнем! 🚀")
             markup.add(button)
+            button = KeyboardButton(text="Синхронизировать Google Calendar")
+            markup.add(button)
 
             bot.reply_to(message, "✅ Получена живая локация! Теперь я буду вас отслеживать.", reply_markup=markup)
         sessions[user_id]["location"] = (message.location.latitude, message.location.longitude)
@@ -48,10 +50,13 @@ def track_locations():
     while True:
         time.sleep(30)
         logger.info("Sending locations...")
+
         sessions = storage.get_value("sessions")
-        
+    
         if not sessions:
             continue
+            
+        sessions = sessions.copy()
 
         for user_id in sessions.keys():
             if not "location" in sessions[user_id]:

@@ -5,7 +5,7 @@ logger.info("Adding idle state handler...")
 
 
 from telebot import types
-from telebot.types import ReplyKeyboardRemove
+from telebot.types import ReplyKeyboardRemove, KeyboardButton
 import storage
 
 bot = storage.get_value('bot')
@@ -47,11 +47,35 @@ def idle(message):
         if not "location" in sessions[message.chat.id]:
             bot.send_message(message.chat.id, "Пожалуйста, отправьте свою живую локацию")
             return
+        elif message.text == "Синхронизировать Google Calendar":
+
+            responce = requests.get(URL + "login", params={"user_id": message.chat.id})
+
+            if responce.status_code == 200:
+                auth_url = responce.json()["url"]
+
+                text = "Для синхронизации Google Calendar перейдите по ссылке: \n\n" + f"<a href='{auth_url}'>{'Google Autorization'}</a>"
+
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                button = KeyboardButton(text="Давайте начнем! 🚀")
+                markup.add(button)
+
+                bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="HTML")
+
+                return
+            else:
+                logger.error(responce.json())
+
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                button = KeyboardButton(text="Давайте начнем! 🚀")
+                markup.add(button)
+                button = KeyboardButton(text="Синхронизировать Google Calendar")
+                markup.add(button)
+
+                bot.send_message(message.chat.id, "Не удалось выполнить синхронизацию... попробуйте еще раз", reply_markup=markup)
+                return
         else:
             state_machine.trigger(message.from_user.id, "continue")
-
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-
 
     if message.text == "Давайте начнем! 🚀" or message.text == "Назад":
         bot.send_message(message.chat.id, "🕒 Отлично! Напишите его текст или отправьте аудио с напоминанием. \n\nЕсли захотите удалить напоминание, то скажите \"Удалить напоминание на завтра...\"\n\n Если захотите получить список напоминаний, то скажите \"Покажи все напоминания\"", reply_markup=ReplyKeyboardRemove())
