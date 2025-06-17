@@ -1,12 +1,31 @@
 import os
 import speech_recognition as sr
-from pydub import AudioSegment
-from decription.text import parse_reminder_huggingface 
+from text import parse_reminder_huggingface
+
+import subprocess
+import os
+
+def ogg_to_wav(input_path: str, output_path: str):
+    if not os.path.exists(input_path):
+        raise FileNotFoundError("Файл .ogg не найден")
+
+    result = subprocess.run([
+        "C:\\ffmpeg\\bin\\ffmpeg.exe",  # путь к ffmpeg
+        "-y",                           # перезаписывать файл, если уже есть
+        "-i", input_path,              # входной файл
+        output_path                    # выходной файл
+    ], capture_output=True, text=True)
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Ошибка ffmpeg:\n{result.stderr}")
+
+    return output_path
+
 
 def ogg_to_text_google(filename):
-    sound = AudioSegment.from_ogg(filename)
+
+    ogg_to_wav(filename, "temp.wav")
     wav_filename = "temp.wav"
-    sound.export(wav_filename, format="wav", parameters=["-ac", "1", "-ar", "16000"])  # моно, 16 kHz
 
     recognizer = sr.Recognizer()
 
@@ -27,8 +46,19 @@ def ogg_to_text_google(filename):
 
 def parse_reminder_from_audio(audio_file_path):
     """Основная функция для обработки аудио напоминания"""
+    
+    if not os.path.exists(audio_file_path):
+        raise FileNotFoundError(f"Аудио файл {audio_file_path} не найден")
+    
+    
+
+    transcription = ogg_to_text_google(audio_file_path)
+
+    print("sddsff")
+    print(f"Распознанный текст: {transcription}")
+
     try:
-        transcription = ogg_to_text_google(audio_file_path)
+        
         if not transcription:
             raise ValueError("Не удалось распознать текст из аудио")
 

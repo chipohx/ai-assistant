@@ -37,7 +37,7 @@ if not TELEGRAMBOT_KEY or not URL:
 logger.info("Initializing bot and retrieving CSRF token...")
 
 bot = telebot.TeleBot(TELEGRAMBOT_KEY)
-csrftoken = requests.get(URL).json()['csrf']
+csrftoken = requests.get(URL + "csrf").json()['csrf']
 
 if not bot:
     raise ValueError("Bot initialization failed. Please check your TELEGRAMBOT_KEY and URL.")
