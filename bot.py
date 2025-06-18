@@ -5,8 +5,8 @@ import requests
 from dotenv import load_dotenv
 import os
 
-TELEGRAMBOT_KEY='7149122758:AAFPExYYBW1YLICqo76wx9O-UNOXJ7_wtNU'
-URL='https://feebly-settled-killifish.cloudpub.ru/'
+TELEGRAMBOT_KEY='7727963370:AAE6HvZmi6iAm1hkztctqJNW02EG92AN2YY'
+URL='https://feebly-settled-killifish.cloudpub.ru'
 
 load_dotenv()
 bot = telebot.TeleBot(TELEGRAMBOT_KEY)
@@ -18,7 +18,7 @@ bot = telebot.TeleBot(TELEGRAMBOT_KEY)
 state = "idle"
 # Список состояний:
 # - 
-csrftoken = requests.get(URL).json()['csrf']
+csrftoken = requests.get(URL + '/csrf').json()['csrf']
 header = {'X-CSRFToken': csrftoken}
 cookies = {'csrftoken': csrftoken}
 
@@ -55,7 +55,12 @@ def get_text_messages(message):
         mes = requests.post(URL, data=content, headers=header, cookies=cookies).json()
         bot.send_message(message.from_user.id, mes['message'])
 
-
+@bot.message_handler(content_types=['voice','text'])
+def repeat_all_message(message):
+    file_info = bot.get_file(message.voice.file_id)
+    file = requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(TELEGRAMBOT_KEY, file_info.file_path))
+    with open('voice.ogg','wb') as f:
+        f.write(file.content)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 

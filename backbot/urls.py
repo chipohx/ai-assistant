@@ -21,5 +21,8 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index),
+    path('csrf', views.get_csrf),
     path('records/', include("records.urls")),
+    path('oauth2callback', views.oauth2callback),
+    path("login", views.login)
 ]

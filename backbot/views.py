@@ -6,9 +6,21 @@ import requests
 from datetime import datetime
 import json
 import re
+from google_auth_oauthlib.flow import Flow
+import os, pickle
+from dotenv import load_dotenv
 
+load_dotenv()
 
 URL = "http://localhost:8000"
+
+CLIENT_SECRETS_FILE = "client_secret.json"
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
+REDIRECT_URI = "https://feebly-settled-killifish.cloudpub.ru/oauth2callback"
+TOKEN=os.getenv("TOKEN")
+
+user_tokens = {}
+pending_flows = {}
 
 def post_db(url, content):
     csrftoken = requests.get(url).json()['csrf']
@@ -20,23 +32,113 @@ def post_db(url, content):
     return ans
 def get_db(url, content):
     return requests.get(url, params=content)
-    
-def index(request):
-    content = {'message' : 'hello', 'csrf': get_token(request)}
-    if request.method == 'POST':
-        
-        ans = preprosess_message(request.POST['message'])
-        ans['user_id'] = request.POST['user_id']
-        print(ans)
-        if ans['action'] == 'add':
-            resp = post_db(URL + '/records/add', ans)
-        elif ans['action'] == 'delete':
-            resp = get_db(URL + '/records/get_similar', ans).json()
-            print(resp)
-        return JsonResponse(resp)
-    
+
+def get_csrf(request):
+    content = {'csrf': get_token(request)}
     return JsonResponse(content)
 
+def index(request):
+    ans = preprosess_message(request.POST['message'])
+    ans['user_id'] = request.POST['user_id']
+    return JsonResponse(ans)
+
+
+def send_message(CHAT_ID, TEXT):
+    
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": TEXT
+    }
+    response = requests.post(url, data=payload)
+    return response
+
+def login(request):
+    user_id = request.GET['user_id']
+
+    flow = Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE,
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+
+    # 📌 Используем user_id как state
+    auth_url, _ = flow.authorization_url(
+        prompt='consent',
+        access_type='offline',
+        include_granted_scopes='true',
+        state=str(user_id)
+    )
+
+    pending_flows[user_id] = flow
+    return JsonResponse({"url": auth_url})
+
+# def login(request):
+#     user_id = request.GET['user_id']
+#     print("in login", user_id)
+#     flow = Flow.from_client_secrets_file(
+#         CLIENT_SECRETS_FILE,
+#         scopes=SCOPES,
+#         redirect_uri=REDIRECT_URI
+#     )
+#     auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', include_granted_scopes='true')
+#     print("in login", user_id)
+#     print("_", _)
+#     user_tokens[user_id] = flow
+#     return JsonResponse({"url": auth_url})
+
+
+def oauth2callback(request):
+    state = request.GET['state']
+    code = request.GET['code']
+  
+    if not state or not code:
+        return render(request, 'backbot/unsuccessful_reg.html')
+
+    try:
+        user_id = state
+    except ValueError:
+        return render(request, 'backbot/unsuccessful_reg.html')
+    
+    flow = pending_flows.get(user_id)
+    if not flow:
+        return render(request, 'backbot/unsuccessful_reg.html')
+    
+    try:
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+
+        # 💾 Сохраняем токен
+        os.makedirs("tokens", exist_ok=True)
+        with open(f"tokens/{user_id}.pickle", "wb") as token_file:
+            pickle.dump(credentials, token_file)
+        send_message(user_id, "✅ Вы успешно авторизовались!")
+        del pending_flows[user_id]  # очищаем память
+        return render(request, 'backbot/successful_reg.html')
+        return HttpResponse("Авторизация завершена. Можете вернуться в Telegram.")
+    except Exception as e:
+        return render(request, 'backbot/unsuccessful_reg.html')
+    
+# def oauth2callback(request):
+#     state = request.GET['state']
+#     code = request.GET['code']
+#     print("USer tokens", user_tokens)
+#     print("state", state)
+
+#     for user_id, flow in user_tokens.items():
+#         print("In oauth", user_id)
+#         flow.fetch_token(code=code)
+#         credentials = flow.credentials
+#         # Сохраняем токен
+#         with open(f"tokens/{user_id}.pickle", "wb") as token_file:
+#             pickle.dump(credentials, token_file)
+#         send_message(user_id, "✅ Вы успешно авторизовались!")
+#         #bot.send_message(user_id, "✅ Вы успешно авторизовались!")
+#         return HttpResponse("Авторизация завершена. Можете вернуться в Telegram.")
+#     return HttpResponse("Ошибка авторизации")
+
+
+# =======================================================
 def preprosess_message(text):
     try:
         parsed_data = parse_reminder_huggingface(text)

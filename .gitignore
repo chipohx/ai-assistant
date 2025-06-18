@@ -2,3 +2,12 @@
 /.vscode/
 .env
 ./bot.py
+./tokens
+./.env
+./client_secret.json
+__pycache__/
+.vscode/
+.env
+tokens/
+client_secret.json
+bot.py
