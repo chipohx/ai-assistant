@@ -128,10 +128,10 @@ def add(request):
                      location_y=longitude, datetime=datetime, done=done, condition=condition)) != 0:
             return JsonResponse({"message": "Record exists", 'check': "Success"})
         
-        was_calendar = 0
+        was_calendar = '0'
         if condition == 'time':
             was_calendar = add_event_for_user(user_id, text, datetime)
-
+        print(was_calendar)
         rec = Record(user_id=user_id, text=text, category=category, location_x=latitude, 
                      location_y=longitude, datetime=datetime, done=done, condition=condition, address=address, calendar_id=was_calendar)
         rec.save()
@@ -249,14 +249,33 @@ def get_top_similar_sentences(indexed_corpus, query):
     ]
     return results
 
+def delete_all_for_user(request):
+    user_id = request.POST['user_id']
+    records = Record.objects.filter(user_id=user_id)
+    for rec in records:
+        if rec.calendar_id:
+            _ = delete_event_for_user(rec.user_id, rec.calendar_id)
+        rec.delete()
+    return JsonResponse({"message": "Records deleted", 'check': "Success"})
+
+
 def get_similar(request):
     user_id = request.GET['user_id']
     text = request.GET['text']
+    if 'by' not in request.GET:
+        by = 'text'
+    else:
+        by = request.GET['by']
     
     records = Record.objects.filter(user_id=user_id).order_by("datetime")
-    rec_texts = list(map(lambda x: (x.id, x.text), records))
     
-    similar = get_top_similar_sentences(rec_texts, text)
+    if by == 'text':
+        rec_texts = list(map(lambda x: (x.id, x.text), records))
+        similar = get_top_similar_sentences(rec_texts, text)
+    elif by == 'codition':
+        rec_texts = list(map(lambda x: (x.id, x.condition), records))
+        similar = get_top_similar_sentences(rec_texts, text)
+
     
     recs = [Record.objects.get(pk=x[0]) for x in similar]
     #recs = [[rec.id, rec.user_id, rec.text, rec.category, (rec.location_x, rec.location_y),

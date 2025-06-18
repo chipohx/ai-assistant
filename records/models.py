@@ -15,7 +15,7 @@ class Record(models.Model):
     datetime = models.DateTimeField(default=timezone.now, null=True)
     done = models.BooleanField(default=False)
     condition = models.CharField(max_length=16)
-    calendar_id = models.IntegerField(default=0)
+    calendar_id = models.CharField(max_length=255, default=0)
 
 class Token(models.Model):
     user_id = models.IntegerField()
