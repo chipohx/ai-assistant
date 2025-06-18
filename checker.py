@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 import os
 from time import sleep
 
-TOKEN='7149122758:AAFPExYYBW1YLICqo76wx9O-UNOXJ7_wtNU'
+load_dotenv()
+TOKEN=os.getenv("TOKEN")
 URL='https://feebly-settled-killifish.cloudpub.ru'
 
 csrftoken = requests.get(URL+"/csrf").json()['csrf']
