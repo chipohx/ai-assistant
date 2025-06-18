@@ -5,6 +5,7 @@ logger.info("Adding idle state handler...")
 
 
 from telebot import types
+from telebot.types import ReplyKeyboardRemove
 import storage
 
 bot = storage.get_value('bot')
@@ -25,18 +26,26 @@ URL = os.getenv("URL")
 # Обработка локации (включая живую)
 @bot.message_handler(content_types=['location'])
 def handle_location(message: Message):
+    logger.info("Got new location")
     user_id = message.from_user.id
     sessions = storage.get_value("sessions")
     if message.location.live_period:
+
+        if not sessions or not user_id in sessions:
+            return
         
-        if not "location" in sessions[user_id]:
+        markup = ReplyKeyboardRemove()
+
+        if state_machine.get_state(message.chat.id) == "Greetings":
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             button = KeyboardButton(text="Давайте начнем! 🚀")
             markup.add(button)
-            button = KeyboardButton(text="Синхронизировать Google Calendar")
-            markup.add(button)
 
-            bot.reply_to(message, "✅ Получена живая локация! Теперь я буду вас отслеживать.", reply_markup=markup)
+            if not 'google_sync' in sessions[user_id]:
+                button = KeyboardButton(text="Синхронизировать Google Calendar")
+                markup.add(button)
+
+        bot.reply_to(message, "✅ Получена живая локация! Теперь я буду вас отслеживать.", reply_markup=markup)
         sessions[user_id]["location"] = (message.location.latitude, message.location.longitude)
     else:
         bot.reply_to(message, "📍 Спасибо! Но, пожалуйста, отправьте *живую* геолокацию вручную через Telegram.", parse_mode="Markdown")

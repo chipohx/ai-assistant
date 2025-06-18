@@ -44,10 +44,7 @@ def idle(message):
 
     if state_machine.get_state(message.chat.id) == "Greetings":
 
-        if not "location" in sessions[message.chat.id]:
-            bot.send_message(message.chat.id, "Пожалуйста, отправьте свою живую локацию")
-            return
-        elif message.text == "Синхронизировать Google Calendar":
+        if message.text == "Синхронизировать Google Calendar":
 
             responce = requests.get(URL + "login", params={"user_id": message.chat.id})
 
@@ -97,8 +94,10 @@ def idle(message):
             logger.error(f"Error adding reminder: {mes['message']}")
             bot.send_message(message.chat.id, "❌ Не удалось сохранить напоминание. Попробуйте еще раз.")
             return
-        
-        bot.send_message(message.chat.id, "✅ Напоминание успешно сохранено!")
+
+        google_calendar = responce.json()['calendar']
+        logger.info('Google Sync', responce.json()['calendar'])
+        bot.send_message(message.chat.id, f"✅ Напоминание успешно сохранено!" + ('\n\nСинхронизированно с Google Calendar' if google_calendar else ''))
         return
     
     elif message.content_type == 'text':
@@ -130,13 +129,17 @@ def idle(message):
         add_event.show_event(message.chat.id)
         return
 
-    if command["action"] == "delete":
-        
+    if command["action"] == "delete" or command["action"] == "delete_all":
+
+        if command["action"] == "delete_all":
+            bot.send_message(message.chat.id, "Возможность удаления всех сообщений сразу была опущена 🚽")
+            command['text'] = '_'
 
         message_id = bot.send_message(message.chat.id, "Получаю список напоминаний...")
 
         content = {"text": command["text"]}
         content['user_id'] = message.chat.id
+        content['by'] = 'text'
         
         responce = requests.get(URL + "records/get_similar", params=content, headers=header, cookies=cookies)
 
@@ -173,10 +176,6 @@ def idle(message):
 
         show_all_events.show_all_events(message.chat.id)
 
-        return
-
-    if command["action"] == "delete_all":
-        bot.send_message(message.chat.id, "Функционал удаления всех сообщений был упущен 🚽")
         return
 
     bot.send_message(message.chat.id, "Команда не распознана 🧻")
